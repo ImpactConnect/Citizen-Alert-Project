@@ -12,6 +12,7 @@ import '../../services/report_service.dart';
 import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart'
     show RealtimeSubscribeException;
+import '../../widgets/navigation/custom_navigation_bar.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -93,6 +94,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ),
+      bottomNavigationBar: const CustomNavigationBar(),
     );
   }
 

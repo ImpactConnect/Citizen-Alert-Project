@@ -6,6 +6,7 @@ import '../models/report_model.dart';
 import '../config/supabase_config.dart';
 import 'package:uuid/uuid.dart';
 import '../models/comment_model.dart';
+import '../models/vote_model.dart';
 
 class ReportService {
   final _supabase = Supabase.instance.client;
@@ -220,5 +221,104 @@ class ReportService {
       debugPrint('Delete comment error: $e');
       rethrow;
     }
+  }
+
+  Future<void> addVote(String reportId, String userId, VoteType type) async {
+    try {
+      final existingVote = await _supabase
+          .from('votes')
+          .select()
+          .eq('report_id', reportId)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      if (existingVote != null) {
+        // Update existing vote
+        await _supabase
+            .from('votes')
+            .update({'type': type.toString().split('.').last}).eq(
+                'id', existingVote['id']);
+      } else {
+        // Create new vote
+        final vote = VoteModel(
+          id: const Uuid().v4(),
+          reportId: reportId,
+          userId: userId,
+          type: type,
+          createdAt: DateTime.now(),
+        );
+        await _supabase.from('votes').insert(vote.toMap());
+      }
+    } catch (e) {
+      debugPrint('Add vote error: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> removeVote(String reportId, String userId) async {
+    try {
+      await _supabase
+          .from('votes')
+          .delete()
+          .eq('report_id', reportId)
+          .eq('user_id', userId);
+    } catch (e) {
+      debugPrint('Remove vote error: $e');
+      rethrow;
+    }
+  }
+
+  Stream<Map<String, int>> getVoteCounts(String reportId) {
+    return _supabase
+        .from('votes')
+        .stream(primaryKey: ['id'])
+        .eq('report_id', reportId)
+        .map((data) {
+          final upvotes = data.where((vote) => vote['type'] == 'upvote').length;
+          final downvotes =
+              data.where((vote) => vote['type'] == 'downvote').length;
+          return {'upvotes': upvotes, 'downvotes': downvotes};
+        });
+  }
+
+  Future<VoteType?> getUserVote(String reportId, String userId) async {
+    try {
+      final response = await _supabase
+          .from('votes')
+          .select()
+          .eq('report_id', reportId)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      if (response != null) {
+        return VoteType.values.firstWhere(
+          (e) => e.toString().split('.').last == response['type'],
+        );
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Get user vote error: $e');
+      rethrow;
+    }
+  }
+
+  Stream<int> getEmergencyReportsCount() {
+    return _supabase.from('reports').stream(primaryKey: ['id']).map((data) =>
+        data
+            .where((report) =>
+                report['category'] ==
+                    ReportCategory.emergency.toString().split('.').last &&
+                report['status'] ==
+                    ReportStatus.pending.toString().split('.').last)
+            .length);
+  }
+
+  Stream<int> getUnreadNotificationsCount(String userId) {
+    return _supabase.from('notifications').stream(primaryKey: ['id']).map(
+        (data) => data
+            .where((notification) =>
+                notification['user_id'] == userId &&
+                notification['read'] == false)
+            .length);
   }
 }

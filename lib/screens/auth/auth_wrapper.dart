@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
-import '../home/home_screen.dart';
+import '../../widgets/navigation/navigation_scaffold.dart';
 import 'login_screen.dart';
 
 class AuthWrapper extends StatelessWidget {
@@ -12,7 +12,7 @@ class AuthWrapper extends StatelessWidget {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, _) {
         if (authProvider.isAuthenticated) {
-          return const HomeScreen(); // We'll create this later
+          return const NavigationScaffold();
         }
         return const LoginScreen();
       },

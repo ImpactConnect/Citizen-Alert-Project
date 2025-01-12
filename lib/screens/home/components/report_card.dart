@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../models/report_model.dart';
+import '../../../models/comment_model.dart';
+import '../../../widgets/reports/vote_buttons.dart';
+import '../../../services/report_service.dart';
 
 class ReportCard extends StatelessWidget {
   final ReportModel report;
@@ -27,6 +30,8 @@ class ReportCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final reportService = ReportService();
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -56,41 +61,30 @@ class ReportCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
                         child: Text(
                           report.title,
-                          style: Theme.of(context).textTheme.titleLarge,
-                          maxLines: 2,
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color:
-                              _getStatusColor(report.status).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          report.status.toString().split('.').last,
-                          style: TextStyle(
-                            color: _getStatusColor(report.status),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+                      VoteButtons(reportId: report.id),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    report.description,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium,
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: onTap,
+                    icon: const Icon(Icons.visibility),
+                    label: const Text('Show Report'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Theme.of(context).colorScheme.primary,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -115,6 +109,50 @@ class ReportCard extends StatelessWidget {
                       Text(
                         DateFormat.yMMMd().format(report.createdAt),
                         style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      StreamBuilder<List<CommentModel>>(
+                        stream: reportService.getComments(report.id),
+                        builder: (context, snapshot) {
+                          final commentCount = snapshot.data?.length ?? 0;
+                          return Row(
+                            children: [
+                              Icon(
+                                Icons.comment_outlined,
+                                size: 16,
+                                color: Theme.of(context).colorScheme.secondary,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '$commentCount Comments',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color:
+                              _getStatusColor(report.status).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          report.status.toString().split('.').last,
+                          style: TextStyle(
+                            color: _getStatusColor(report.status),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ],
                   ),
