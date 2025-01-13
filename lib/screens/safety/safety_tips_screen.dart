@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
+import '../../widgets/layout/base_layout.dart';
 
 class SafetyTipsScreen extends StatelessWidget {
   const SafetyTipsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Safety Tips'),
-      ),
-      body: ListView(
+    return BaseLayout(
+      title: 'Safety Tips',
+      child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           _buildTipCard(
@@ -33,7 +32,8 @@ class SafetyTipsScreen extends StatelessWidget {
           _buildTipCard(
             context,
             title: 'Location Sharing',
-            content: 'Share your location with trusted contacts during emergencies.',
+            content:
+                'Share your location with trusted contacts during emergencies.',
             icon: Icons.location_on,
           ),
           _buildTipCard(
@@ -84,4 +84,4 @@ class SafetyTipsScreen extends StatelessWidget {
       ),
     );
   }
-} 
+}

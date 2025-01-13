@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/report_model.dart';
 import '../../services/report_service.dart';
 import '../reports/report_detail_screen.dart';
+import '../../widgets/layout/base_layout.dart';
 
 class ExploreScreen extends StatelessWidget {
   final ReportService _reportService = ReportService();
@@ -10,11 +11,9 @@ class ExploreScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Explore Reports'),
-      ),
-      body: StreamBuilder<List<ReportModel>>(
+    return BaseLayout(
+      title: 'Explore Reports',
+      child: StreamBuilder<List<ReportModel>>(
         stream: _reportService.getReports(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {

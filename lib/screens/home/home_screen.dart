@@ -8,6 +8,7 @@ import '../reports/submit_report_screen.dart';
 import '../../providers/report_provider.dart';
 import 'components/welcome_card.dart';
 import 'components/quick_actions.dart';
+import 'components/news_section.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -60,6 +61,8 @@ class HomeScreen extends StatelessWidget {
                 children: [
                   const WelcomeCard(),
                   const QuickActions(),
+                  const SizedBox(height: 8),
+                  const NewsSection(),
                   const SizedBox(height: 16),
                 ],
               ),
