@@ -30,11 +30,9 @@ class _CommentsSectionState extends State<CommentsSection> {
   }
 
   Future<void> _submitComment() async {
-    final content = _commentController.text.trim();
-    if (content.isEmpty) return;
+    if (_commentController.text.trim().isEmpty) return;
 
     final user = context.read<AuthProvider>().user!;
-    setState(() => _isSubmitting = true);
 
     try {
       final comment = CommentModel(
@@ -43,19 +41,17 @@ class _CommentsSectionState extends State<CommentsSection> {
         userId: user.uid,
         userDisplayName: user.displayName ?? 'User',
         userAvatarUrl: user.avatarUrl,
-        content: content,
+        content: _commentController.text.trim(),
         createdAt: DateTime.now(),
       );
 
       await _reportService.addComment(comment);
       _commentController.clear();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error posting comment: $e')),
-      );
-    } finally {
       if (mounted) {
-        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error posting comment: $e')),
+        );
       }
     }
   }
@@ -183,20 +179,24 @@ class _CommentTile extends StatelessWidget {
             ? Text(comment.userDisplayName[0].toUpperCase())
             : null,
       ),
-      title: Row(
+      title: Text(
+        comment.userDisplayName,
+        style: const TextStyle(fontWeight: FontWeight.bold),
+      ),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(comment.content),
+          const SizedBox(height: 4),
           Text(
-            comment.userDisplayName,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            timeago.format(comment.createdAt),
-            style: Theme.of(context).textTheme.bodySmall,
+            _getTimeAgo(comment.createdAt),
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 12,
+            ),
           ),
         ],
       ),
-      subtitle: Text(comment.content),
       trailing: isAuthor
           ? IconButton(
               icon: const Icon(Icons.delete_outline),
@@ -204,5 +204,26 @@ class _CommentTile extends StatelessWidget {
             )
           : null,
     );
+  }
+
+  String _getTimeAgo(DateTime createdAt) {
+    final now = DateTime.now();
+    final diff = now.difference(createdAt);
+
+    if (diff.inSeconds < 60) {
+      return 'Just now';
+    } else if (diff.inMinutes < 60) {
+      return '${diff.inMinutes} minutes ago';
+    } else if (diff.inHours < 24) {
+      return '${diff.inHours} hours ago';
+    } else if (diff.inDays < 7) {
+      return '${diff.inDays} days ago';
+    } else if (diff.inDays < 30) {
+      return '${diff.inDays ~/ 7} weeks ago';
+    } else if (diff.inDays < 365) {
+      return '${diff.inDays ~/ 30} months ago';
+    } else {
+      return '${diff.inDays ~/ 365} years ago';
+    }
   }
 }

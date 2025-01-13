@@ -105,8 +105,8 @@ class ReportCard extends StatelessWidget {
         return Icons.build;
       case ReportCategory.environment:
         return Icons.eco;
-      case ReportCategory.utilities:
-        return Icons.power;
+      case ReportCategory.safety:
+        return Icons.security;
       case ReportCategory.emergency:
         return Icons.emergency;
       case ReportCategory.general:
@@ -143,5 +143,33 @@ class ReportCard extends StatelessWidget {
     } else {
       return 'Just now';
     }
+  }
+
+  Widget _buildCategoryChip() {
+    final categoryColors = {
+      ReportCategory.emergency: Colors.red,
+      ReportCategory.infrastructure: Colors.orange,
+      ReportCategory.environment: Colors.green,
+      ReportCategory.safety: Colors.purple,
+      ReportCategory.general: Colors.blue,
+    };
+
+    final color = categoryColors[report.category] ?? Colors.grey;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        report.category.toString().split('.').last,
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
   }
 }

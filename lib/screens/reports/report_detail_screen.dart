@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
 import '../../models/report_model.dart';
+import '../../models/comment_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/report_service.dart';
 import '../../widgets/admin/admin_comment_dialog.dart';
@@ -30,30 +32,46 @@ class ReportDetailScreen extends StatelessWidget {
     }
   }
 
+  Future<void> _addAdminComment(BuildContext context, String comment) async {
+    try {
+      final authProvider = context.read<AuthProvider>();
+      final user = authProvider.user!;
+
+      final commentModel = CommentModel(
+        id: const Uuid().v4(),
+        reportId: report.id,
+        userId: user.uid,
+        userDisplayName: user.displayName ?? 'Admin',
+        userAvatarUrl: user.avatarUrl,
+        content: comment,
+        isAdminComment: true,
+        createdAt: DateTime.now(),
+      );
+
+      await _reportService.addComment(commentModel);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Comment added successfully')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error adding comment: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
   void _showAdminCommentDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AdminCommentDialog(
         initialComment: '',
         onSubmit: (comment) async {
-          try {
-            await _reportService.updateReportStatus(
-              report.id,
-              report.status,
-              adminComment: comment,
-            );
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Comment updated successfully')),
-              );
-            }
-          } catch (e) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                    content: Text('Error updating comment: ${e.toString()}')),
-              );
-            }
+          await _addAdminComment(context, comment);
+          if (context.mounted) {
+            Navigator.pop(context);
           }
         },
       ),
