@@ -15,9 +15,31 @@ class SOSScreen extends StatefulWidget {
   State<SOSScreen> createState() => _SOSScreenState();
 }
 
-class _SOSScreenState extends State<SOSScreen> {
+class _SOSScreenState extends State<SOSScreen>
+    with SingleTickerProviderStateMixin {
   bool _isActivating = false;
   final _reportService = ReportService();
+  late AnimationController _progressController;
+
+  @override
+  void initState() {
+    super.initState();
+    _progressController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          _sendSOSSignal();
+          setState(() => _isActivating = false);
+        }
+      });
+  }
+
+  @override
+  void dispose() {
+    _progressController.dispose();
+    super.dispose();
+  }
 
   Future<void> _makePhoneCall(String phoneNumber) async {
     final Uri launchUri = Uri(
@@ -89,9 +111,21 @@ class _SOSScreenState extends State<SOSScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Emergency signal sent! Help is on the way.'),
-            backgroundColor: Colors.red,
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Emergency signal sent! Help is on the way.',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green,
             duration: Duration(seconds: 5),
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -99,8 +133,20 @@ class _SOSScreenState extends State<SOSScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error sending SOS signal: $e'),
+            content: Row(
+              children: [
+                const Icon(Icons.error, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Error sending SOS signal: $e',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
             backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -125,50 +171,71 @@ class _SOSScreenState extends State<SOSScreen> {
                 onLongPressStart: (_) {
                   setState(() => _isActivating = true);
                   HapticFeedback.heavyImpact();
+                  _progressController.forward(from: 0.0);
                 },
                 onLongPressEnd: (_) {
-                  if (_isActivating) {
-                    _sendSOSSignal();
+                  if (_progressController.value < 1.0) {
+                    _progressController.reset();
+                    setState(() => _isActivating = false);
                   }
-                  setState(() => _isActivating = false);
                 },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  width: _isActivating ? 120 : 100,
-                  height: _isActivating ? 120 : 100,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _isActivating ? Colors.red[700] : Colors.red,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.red.withOpacity(0.5),
-                        spreadRadius: _isActivating ? 10 : 2,
-                        blurRadius: _isActivating ? 15 : 5,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.warning_rounded,
-                          color: Colors.white,
-                          size: _isActivating ? 48 : 40,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'SOS',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: _isActivating ? 20 : 16,
-                            fontWeight: FontWeight.bold,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      width: _isActivating ? 120 : 100,
+                      height: _isActivating ? 120 : 100,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _isActivating ? Colors.red[700] : Colors.red,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.red.withOpacity(0.5),
+                            spreadRadius: _isActivating ? 10 : 2,
+                            blurRadius: _isActivating ? 15 : 5,
+                            offset: const Offset(0, 3),
                           ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.warning_rounded,
+                              color: Colors.white,
+                              size: _isActivating ? 48 : 40,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'SOS',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: _isActivating ? 20 : 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                    if (_isActivating)
+                      AnimatedBuilder(
+                        animation: _progressController,
+                        builder: (context, child) {
+                          return SizedBox(
+                            width: 140,
+                            height: 140,
+                            child: CircularProgressIndicator(
+                              value: _progressController.value,
+                              strokeWidth: 4,
+                              color: Colors.white,
+                            ),
+                          );
+                        },
+                      ),
+                  ],
                 ),
               ),
             ),

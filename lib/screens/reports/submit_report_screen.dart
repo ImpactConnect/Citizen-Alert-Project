@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../models/report_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/report_service.dart';
@@ -20,6 +21,51 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
   final _descriptionController = TextEditingController();
   final _locationController = TextEditingController();
   final _reportService = ReportService();
+  Position? _currentPosition;
+  bool _isLoadingLocation = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _getCurrentLocation();
+  }
+
+  Future<void> _getCurrentLocation() async {
+    setState(() => _isLoadingLocation = true);
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        throw 'Location services are disabled';
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          throw 'Location permissions are denied';
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        throw 'Location permissions are permanently denied';
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      setState(() {
+        _currentPosition = position;
+        _locationController.text =
+            '${position.latitude}, ${position.longitude}';
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error getting location: $e')),
+      );
+    } finally {
+      setState(() => _isLoadingLocation = false);
+    }
+  }
 
   ReportCategory _selectedCategory = ReportCategory.general;
   final List<File> _selectedImages = [];
@@ -43,12 +89,18 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
       final userId = context.read<AuthProvider>().user!.uid;
       final reportId = const Uuid().v4();
 
+      if (_currentPosition == null) {
+        await _getCurrentLocation();
+      }
+
       final report = ReportModel(
         id: reportId,
         userId: userId,
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
-        location: _locationController.text.trim(),
+        location: _currentPosition != null
+            ? '${_currentPosition!.latitude}, ${_currentPosition!.longitude}'
+            : _locationController.text.trim(),
         category: _selectedCategory,
         status: ReportStatus.pending,
         priority: 'medium',
@@ -150,10 +202,30 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _locationController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Location',
-                  border: OutlineInputBorder(),
-                  suffixIcon: Icon(Icons.location_on),
+                  border: const OutlineInputBorder(),
+                  suffixIcon: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_isLoadingLocation)
+                        const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        )
+                      else
+                        IconButton(
+                          icon: const Icon(Icons.my_location),
+                          onPressed: _getCurrentLocation,
+                          tooltip: 'Get current location',
+                        ),
+                      const Icon(Icons.location_on),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
