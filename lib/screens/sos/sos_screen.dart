@@ -1,10 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../widgets/navigation/custom_navigation_bar.dart';
+import 'package:geolocator/geolocator.dart';
+import '../../services/report_service.dart';
+import '../../models/report_model.dart';
+import 'package:uuid/uuid.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 
-class SOSScreen extends StatelessWidget {
+class SOSScreen extends StatefulWidget {
   const SOSScreen({super.key});
+
+  @override
+  State<SOSScreen> createState() => _SOSScreenState();
+}
+
+class _SOSScreenState extends State<SOSScreen> {
+  bool _isActivating = false;
+  final _reportService = ReportService();
 
   Future<void> _makePhoneCall(String phoneNumber) async {
     final Uri launchUri = Uri(
@@ -28,6 +41,72 @@ class SOSScreen extends StatelessWidget {
     );
   }
 
+  Future<Position> _getCurrentLocation() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      throw 'Location services are disabled';
+    }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        throw 'Location permissions are denied';
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      throw 'Location permissions are permanently denied';
+    }
+
+    return await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+  }
+
+  Future<void> _sendSOSSignal() async {
+    try {
+      final position = await _getCurrentLocation();
+      final user = context.read<AuthProvider>().user;
+      final reportId = const Uuid().v4();
+
+      final report = ReportModel(
+        id: reportId,
+        userId: user?.uid ?? 'guest',
+        title: 'EMERGENCY SOS SIGNAL',
+        description: 'Emergency distress signal activated',
+        location: '${position.latitude}, ${position.longitude}',
+        category: ReportCategory.emergency,
+        status: ReportStatus.pending,
+        priority: 'high',
+        createdAt: DateTime.now(),
+        mediaUrls: [],
+        videoUrl: null,
+      );
+
+      await _reportService.createReport(report);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Emergency signal sent! Help is on the way.'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 5),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error sending SOS signal: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,6 +117,71 @@ class SOSScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // SOS Button
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            child: Center(
+              child: GestureDetector(
+                onLongPressStart: (_) {
+                  setState(() => _isActivating = true);
+                  HapticFeedback.heavyImpact();
+                },
+                onLongPressEnd: (_) {
+                  if (_isActivating) {
+                    _sendSOSSignal();
+                  }
+                  setState(() => _isActivating = false);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  width: _isActivating ? 120 : 100,
+                  height: _isActivating ? 120 : 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _isActivating ? Colors.red[700] : Colors.red,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.red.withOpacity(0.5),
+                        spreadRadius: _isActivating ? 10 : 2,
+                        blurRadius: _isActivating ? 15 : 5,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.warning_rounded,
+                          color: Colors.white,
+                          size: _isActivating ? 48 : 40,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'SOS',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: _isActivating ? 20 : 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const Text(
+            'Hold the SOS button for 3 seconds to send an emergency signal',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.red,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 24),
           _buildEmergencyCard(
             title: 'National Emergency Number',
             contacts: const ['112'],

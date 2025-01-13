@@ -4,6 +4,9 @@ import '../../providers/auth_provider.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'notification_preferences_screen.dart';
+import 'location_settings_screen.dart';
+import 'privacy_settings_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -34,7 +37,13 @@ class SettingsScreen extends StatelessWidget {
                 title: 'Notification Preferences',
                 icon: Icons.notifications_outlined,
                 onTap: () {
-                  // TODO: Implement notification settings
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          const NotificationPreferencesScreen(),
+                    ),
+                  );
                 },
               ),
               _buildTile(
@@ -71,7 +80,12 @@ class SettingsScreen extends StatelessWidget {
                 title: 'Location Settings',
                 icon: Icons.location_on_outlined,
                 onTap: () {
-                  // TODO: Implement location settings
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LocationSettingsScreen(),
+                    ),
+                  );
                 },
               ),
             ],
