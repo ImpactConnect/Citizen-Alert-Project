@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../reports/submit_report_screen.dart';
+import '../../explore/explore_screen.dart';
+import '../../sos/sos_screen.dart';
+import '../../safety/safety_tips_screen.dart';
+import '../../analytics/analytics_screen.dart';
 
 class QuickActions extends StatelessWidget {
   const QuickActions({super.key});
@@ -14,27 +19,42 @@ class QuickActions extends StatelessWidget {
           _QuickActionButton(
             icon: Icons.add_circle_outline,
             label: 'New Report',
-            onTap: () => Navigator.pushNamed(context, '/submit-report'),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SubmitReportScreen()),
+            ),
           ),
           _QuickActionButton(
             icon: Icons.explore,
             label: 'Explore',
-            onTap: () => Navigator.pushNamed(context, '/explore'),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => ExploreScreen()),
+            ),
           ),
           _QuickActionButton(
             icon: Icons.warning_amber,
             label: 'SOS',
-            onTap: () => Navigator.pushNamed(context, '/sos'),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SOSScreen()),
+            ),
           ),
           _QuickActionButton(
             icon: Icons.tips_and_updates,
             label: 'Safety Tips',
-            onTap: () => Navigator.pushNamed(context, '/safety-tips'),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SafetyTipsScreen()),
+            ),
           ),
           _QuickActionButton(
             icon: Icons.analytics,
             label: 'Analytics',
-            onTap: () => Navigator.pushNamed(context, '/analytics'),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => AnalyticsScreen()),
+            ),
           ),
         ],
       ),
