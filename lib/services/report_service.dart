@@ -1,257 +1,297 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/material.dart' show debugPrint;
 import '../models/report_model.dart';
+import '../config/supabase_config.dart';
+import 'package:uuid/uuid.dart';
 import '../models/comment_model.dart';
 import '../models/vote_model.dart';
+import 'dart:io';
 
 class ReportService {
   final _supabase = Supabase.instance.client;
 
   // Create a new report
-  Future<void> createReport(ReportModel report) async {
+  Future<String> createReport(ReportModel report) async {
     try {
-      await _supabase.from('reports').insert(report.toMap());
-    } catch (e) {
-      throw 'Failed to create report: $e';
-    }
-  }
+      final reportId = const Uuid().v4();
+      final currentUser = _supabase.auth.currentUser;
+      if (currentUser == null) throw Exception('User not authenticated');
 
-  // Get recent reports
-  Future<List<ReportModel>> getRecentReports({int limit = 3}) async {
-    try {
       final response = await _supabase
-          .from('reports')
+          .from(SupabaseConfig.reportsTable)
+          .insert({
+            'id': reportId,
+            'user_id': currentUser.id,
+            'title': report.title,
+            'description': report.description,
+            'location': report.location,
+            'category': report.category.toString().split('.').last,
+            'status': report.status.toString().split('.').last,
+            'priority': report.priority,
+            'created_at': DateTime.now().toIso8601String(),
+            'media_urls': report.mediaUrls,
+            'video_url': report.videoUrl,
+          })
           .select()
-          .order('created_at', ascending: false)
-          .limit(limit);
+          .single();
 
-      return (response as List).map((row) => ReportModel.fromMap(row)).toList();
+      return response['id'];
     } catch (e) {
-      throw 'Failed to fetch recent reports: $e';
+      debugPrint('Create report error: $e');
+      rethrow;
     }
   }
 
-  // Get filtered reports
-  Future<List<ReportModel>> getFilteredReports({
+  // Upload media file
+  Future<String> uploadMedia(String filePath, String reportId) async {
+    try {
+      final file = File(filePath);
+      final path = 'reports/$reportId/${file.uri.pathSegments.last}';
+
+      await _supabase.storage.from('media').upload(path, file);
+
+      // Get the public URL after successful upload
+      final publicUrl = _supabase.storage.from('media').getPublicUrl(path);
+      return publicUrl;
+    } catch (e) {
+      debugPrint('Failed to upload media: $e');
+      throw Exception('Failed to upload media: $e');
+    }
+  }
+
+  // Upload video file
+  Future<String> uploadVideo(String filePath, String reportId) async {
+    try {
+      final file = File(filePath);
+      final path = 'reports/$reportId/${file.uri.pathSegments.last}';
+
+      await _supabase.storage.from('videos').upload(path, file);
+
+      // Get the public URL after successful upload
+      final publicUrl = _supabase.storage.from('videos').getPublicUrl(path);
+      return publicUrl;
+    } catch (e) {
+      debugPrint('Failed to upload video: $e');
+      throw Exception('Failed to upload video: $e');
+    }
+  }
+
+  // Stream of reports
+  Stream<List<ReportModel>> getReports({
+    String? userId,
     ReportCategory? category,
     ReportStatus? status,
-    String? searchQuery,
-    String sortBy = 'date',
-    bool ascending = false,
-  }) async {
-    try {
-      var query = _supabase.from('reports').select();
-
-      if (category != null) {
-        query = query.eq('category', category.toString().split('.').last);
-      }
-
-      if (status != null) {
-        query = query.eq('status', status.toString().split('.').last);
-      }
-
-      String orderColumn = switch (sortBy) {
-        'date' => 'created_at',
-        'priority' => 'priority',
-        'status' => 'status',
-        _ => 'created_at',
-      };
-
-      final response = await query.order(orderColumn, ascending: ascending);
-      var reports =
-          (response as List).map((row) => ReportModel.fromMap(row)).toList();
-
-      // Apply text search filter in memory since Supabase text search might be limited
-      if (searchQuery != null && searchQuery.isNotEmpty) {
-        reports = reports.where((report) {
-          return report.title
-                  .toLowerCase()
-                  .contains(searchQuery.toLowerCase()) ||
-              report.description
-                  .toLowerCase()
-                  .contains(searchQuery.toLowerCase());
-        }).toList();
-      }
-
-      return reports;
-    } catch (e) {
-      throw 'Failed to fetch filtered reports: $e';
-    }
-  }
-
-  // Update report status
-  Future<void> updateReportStatus(String reportId, ReportStatus status) async {
-    try {
-      await _supabase.from('reports').update(
-          {'status': status.toString().split('.').last}).eq('id', reportId);
-    } catch (e) {
-      throw 'Failed to update report status: $e';
-    }
-  }
-
-  // Add comment to report
-  Future<void> addComment(CommentModel comment) async {
-    try {
-      await _supabase.from('comments').insert(comment.toMap());
-    } catch (e) {
-      throw 'Failed to add comment: $e';
-    }
-  }
-
-  // Add vote to report
-  Future<void> addVote(VoteModel vote) async {
-    try {
-      await _supabase.from('votes').insert(vote.toMap());
-    } catch (e) {
-      throw 'Failed to add vote: $e';
-    }
-  }
-
-  // Get report comments
-  Future<List<CommentModel>> getReportComments(String reportId) async {
-    try {
-      final response = await _supabase
-          .from('comments')
-          .select()
-          .eq('report_id', reportId)
-          .order('created_at', ascending: false);
-
-      return (response as List)
-          .map((row) => CommentModel.fromMap(row))
-          .toList();
-    } catch (e) {
-      throw 'Failed to fetch comments: $e';
-    }
-  }
-
-  // Get report votes
-  Future<List<VoteModel>> getReportVotes(String reportId) async {
-    try {
-      final response =
-          await _supabase.from('votes').select().eq('report_id', reportId);
-
-      return (response as List).map((row) => VoteModel.fromMap(row)).toList();
-    } catch (e) {
-      throw 'Failed to fetch votes: $e';
-    }
-  }
-
-  // Get all reports with optional user filter
-  Stream<List<ReportModel>> getReports({String? userId}) {
-    final query = _supabase.from('reports').select();
-
-    if (userId != null) {
-      return query
-          .filter('user_id', 'eq', userId)
-          .order('created_at', ascending: false)
-          .asStream()
-          .map((data) =>
-              (data as List).map((row) => ReportModel.fromMap(row)).toList());
-    }
-
-    return query.order('created_at', ascending: false).asStream().map((data) =>
-        (data as List).map((row) => ReportModel.fromMap(row)).toList());
+  }) {
+    return _supabase
+        .from(SupabaseConfig.reportsTable)
+        .stream(primaryKey: ['id'])
+        .order('created_at', ascending: false)
+        .handleError((error) {
+          debugPrint('Realtime subscription error: $error');
+          // Return empty list on error to keep the stream alive
+          return [];
+        }, test: (error) => error is RealtimeSubscribeException)
+        .map((data) {
+          try {
+            return data.map((json) => ReportModel.fromMap(json)).toList();
+          } catch (e) {
+            debugPrint('Error mapping reports: $e');
+            return [];
+          }
+        });
   }
 
   // Get reports once (non-stream)
   Future<List<ReportModel>> getReportsOnce({
     String? userId,
-    DateTime? startDate,
-    DateTime? endDate,
     ReportCategory? category,
     ReportStatus? status,
   }) async {
     try {
-      var query = _supabase.from('reports').select();
+      var query = _supabase.from(SupabaseConfig.reportsTable).select();
 
       if (userId != null) {
-        query = query.filter('user_id', 'eq', userId);
+        query = query.eq('user_id', userId);
       }
-
       if (category != null) {
-        query =
-            query.filter('category', 'eq', category.toString().split('.').last);
+        query = query.eq('category', category.toString().split('.').last);
       }
-
       if (status != null) {
-        query = query.filter('status', 'eq', status.toString().split('.').last);
-      }
-
-      if (startDate != null) {
-        query = query.filter('created_at', 'gte', startDate.toIso8601String());
-      }
-
-      if (endDate != null) {
-        query = query.filter('created_at', 'lte', endDate.toIso8601String());
+        query = query.eq('status', status.toString().split('.').last);
       }
 
       final response = await query.order('created_at', ascending: false);
-      return (response as List).map((row) => ReportModel.fromMap(row)).toList();
+      return response.map((json) => ReportModel.fromMap(json)).toList();
     } catch (e) {
-      throw 'Failed to fetch reports: $e';
+      debugPrint('Get reports error: $e');
+      rethrow;
     }
   }
 
-  // Update existing report
+  // Update report
   Future<void> updateReport(ReportModel report) async {
     try {
       await _supabase
-          .from('reports')
+          .from(SupabaseConfig.reportsTable)
           .update(report.toMap())
           .eq('id', report.id);
     } catch (e) {
-      throw 'Failed to update report: $e';
+      debugPrint('Update report error: $e');
+      rethrow;
     }
   }
 
   // Delete report
   Future<void> deleteReport(String reportId) async {
     try {
-      await _supabase.from('reports').delete().eq('id', reportId);
+      await _supabase
+          .from(SupabaseConfig.reportsTable)
+          .delete()
+          .eq('id', reportId);
     } catch (e) {
-      throw 'Failed to delete report: $e';
+      debugPrint('Delete report error: $e');
+      rethrow;
     }
   }
 
-  // Get comments for a report
+  // Update report status
+  Future<void> updateReportStatus(String reportId, ReportStatus status,
+      {String? adminComment}) async {
+    try {
+      await _supabase.from(SupabaseConfig.reportsTable).update({
+        'status': status.toString().split('.').last,
+        'updated_at': DateTime.now().toIso8601String(),
+        if (adminComment != null) 'admin_comment': adminComment,
+      }).eq('id', reportId);
+    } catch (e) {
+      debugPrint('Update report status error: $e');
+      rethrow;
+    }
+  }
+
   Stream<List<CommentModel>> getComments(String reportId) {
     return _supabase
         .from('comments')
-        .select()
-        .filter('report_id', 'eq', reportId)
+        .stream(primaryKey: ['id'])
+        .eq('report_id', reportId)
         .order('created_at')
-        .asStream()
-        .map((data) =>
-            (data as List).map((row) => CommentModel.fromMap(row)).toList());
+        .map((data) => data.map((json) => CommentModel.fromMap(json)).toList());
   }
 
-  // Delete comment
+  Future<void> addComment(CommentModel comment) async {
+    try {
+      await _supabase.from('comments').insert(comment.toMap());
+    } catch (e) {
+      debugPrint('Add comment error: $e');
+      rethrow;
+    }
+  }
+
   Future<void> deleteComment(String commentId) async {
     try {
       await _supabase.from('comments').delete().eq('id', commentId);
     } catch (e) {
-      throw 'Failed to delete comment: $e';
+      debugPrint('Delete comment error: $e');
+      rethrow;
     }
   }
 
-  // Get emergency reports count
-  Stream<int> getEmergencyReportsCount() {
-    return _supabase
-        .from('reports')
-        .select()
-        .filter('category', 'eq', 'emergency')
-        .filter('status', 'eq', 'pending')
-        .asStream()
-        .map((data) => (data as List).length);
+  Future<void> addVote(String reportId, String userId, VoteType type) async {
+    try {
+      final existingVote = await _supabase
+          .from('votes')
+          .select()
+          .eq('report_id', reportId)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      if (existingVote != null) {
+        // Update existing vote
+        await _supabase
+            .from('votes')
+            .update({'type': type.toString().split('.').last}).eq(
+                'id', existingVote['id']);
+      } else {
+        // Create new vote
+        final vote = VoteModel(
+          id: const Uuid().v4(),
+          reportId: reportId,
+          userId: userId,
+          type: type,
+          createdAt: DateTime.now(),
+        );
+        await _supabase.from('votes').insert(vote.toMap());
+      }
+    } catch (e) {
+      debugPrint('Add vote error: $e');
+      rethrow;
+    }
   }
 
-  // Get unread notifications count
-  Stream<int> getUnreadNotificationsCount(String userId) {
+  Future<void> removeVote(String reportId, String userId) async {
+    try {
+      await _supabase
+          .from('votes')
+          .delete()
+          .eq('report_id', reportId)
+          .eq('user_id', userId);
+    } catch (e) {
+      debugPrint('Remove vote error: $e');
+      rethrow;
+    }
+  }
+
+  Stream<Map<String, int>> getVoteCounts(String reportId) {
     return _supabase
-        .from('notifications')
-        .select()
-        .filter('user_id', 'eq', userId)
-        .filter('read', 'eq', false)
-        .asStream()
-        .map((data) => (data as List).length);
+        .from('votes')
+        .stream(primaryKey: ['id'])
+        .eq('report_id', reportId)
+        .map((data) {
+          final upvotes = data.where((vote) => vote['type'] == 'upvote').length;
+          final downvotes =
+              data.where((vote) => vote['type'] == 'downvote').length;
+          return {'upvotes': upvotes, 'downvotes': downvotes};
+        });
+  }
+
+  Future<VoteType?> getUserVote(String reportId, String userId) async {
+    try {
+      final response = await _supabase
+          .from('votes')
+          .select()
+          .eq('report_id', reportId)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      if (response != null) {
+        return VoteType.values.firstWhere(
+          (e) => e.toString().split('.').last == response['type'],
+        );
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Get user vote error: $e');
+      rethrow;
+    }
+  }
+
+  Stream<int> getEmergencyReportsCount() {
+    return _supabase.from('reports').stream(primaryKey: ['id']).map((data) =>
+        data
+            .where((report) =>
+                report['category'] ==
+                    ReportCategory.emergency.toString().split('.').last &&
+                report['status'] ==
+                    ReportStatus.pending.toString().split('.').last)
+            .length);
+  }
+
+  Stream<int> getUnreadNotificationsCount(String userId) {
+    return _supabase.from('notifications').stream(primaryKey: ['id']).map(
+        (data) => data
+            .where((notification) =>
+                notification['user_id'] == userId &&
+                notification['read'] == false)
+            .length);
   }
 }

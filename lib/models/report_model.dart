@@ -1,8 +1,8 @@
 enum ReportCategory {
-  emergency,
   infrastructure,
   environment,
-  safety,
+  utilities,
+  emergency,
   general,
 }
 

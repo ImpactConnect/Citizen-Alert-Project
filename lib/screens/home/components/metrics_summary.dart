@@ -29,39 +29,54 @@ class MetricsSummary extends StatelessWidget {
         final resolvedReports =
             reports.where((r) => r.status == ReportStatus.resolved).length;
 
-        return GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 2,
+        return Container(
           padding: const EdgeInsets.all(16),
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 16,
-          children: [
-            _MetricCard(
-              title: 'Total Reports',
-              value: totalReports.toString(),
-              icon: Icons.assessment,
-              color: Colors.blue,
-            ),
-            _MetricCard(
-              title: 'Pending',
-              value: pendingReports.toString(),
-              icon: Icons.pending_actions,
-              color: Colors.orange,
-            ),
-            _MetricCard(
-              title: 'In Progress',
-              value: inProgressReports.toString(),
-              icon: Icons.trending_up,
-              color: Colors.purple,
-            ),
-            _MetricCard(
-              title: 'Resolved',
-              value: resolvedReports.toString(),
-              icon: Icons.check_circle,
-              color: Colors.green,
-            ),
-          ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Overview',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: 16),
+              GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 2,
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+                childAspectRatio: 1.5,
+                children: [
+                  _MetricCard(
+                    title: 'Total Reports',
+                    value: totalReports.toString(),
+                    icon: Icons.assessment,
+                    color: Colors.blue,
+                  ),
+                  _MetricCard(
+                    title: 'Pending',
+                    value: pendingReports.toString(),
+                    icon: Icons.pending_actions,
+                    color: Colors.orange,
+                  ),
+                  _MetricCard(
+                    title: 'In Progress',
+                    value: inProgressReports.toString(),
+                    icon: Icons.trending_up,
+                    color: Colors.purple,
+                  ),
+                  _MetricCard(
+                    title: 'Resolved',
+                    value: resolvedReports.toString(),
+                    icon: Icons.check_circle,
+                    color: Colors.green,
+                  ),
+                ],
+              ),
+            ],
+          ),
         );
       },
     );
@@ -85,8 +100,22 @@ class _MetricCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 2,
-      child: Padding(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Container(
         padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              color.withOpacity(0.1),
+              color.withOpacity(0.05),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -99,10 +128,11 @@ class _MetricCard extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
             ),
-            const SizedBox(height: 4),
             Text(
               title,
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.grey[600],
+                  ),
               textAlign: TextAlign.center,
             ),
           ],

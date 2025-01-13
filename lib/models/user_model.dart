@@ -40,6 +40,4 @@ class UserModel {
       isGuest: isGuest ?? this.isGuest,
     );
   }
-
-  String get fullName => displayName ?? 'User';
 }

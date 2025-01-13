@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../models/user_model.dart';
 import '../../../providers/auth_provider.dart';
 import 'notification_badge.dart';
 
@@ -10,7 +9,7 @@ class HomeAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
-    final UserModel? user = authProvider.user;
+    final user = authProvider.user;
     final bool isGuest = !authProvider.isAuthenticated;
 
     return SliverAppBar(
@@ -41,16 +40,11 @@ class HomeAppBar extends StatelessWidget {
           icon: CircleAvatar(
             backgroundColor: Theme.of(context).colorScheme.primary,
             child: user?.avatarUrl != null
-                ? Image.network(
-                    user!.avatarUrl!,
-                    fit: BoxFit.cover,
-                  )
-                : Icon(
-                    Icons.person,
-                    color: Theme.of(context).colorScheme.onPrimary,
-                  ),
+                ? Image.network(user!.avatarUrl!, fit: BoxFit.cover)
+                : Icon(Icons.person,
+                    color: Theme.of(context).colorScheme.onPrimary),
           ),
-          itemBuilder: (context) => <PopupMenuEntry<String>>[
+          itemBuilder: (context) => [
             if (!isGuest) ...[
               const PopupMenuItem<String>(
                 value: 'profile',

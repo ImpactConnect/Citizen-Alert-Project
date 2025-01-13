@@ -18,7 +18,7 @@ class _NotificationSettingsScreenState
   bool _communityAlerts = true;
   bool _soundEnabled = true;
   bool _vibrationEnabled = true;
-  String _emergencyFrequency = 'always';
+  final String _emergencyFrequency = 'always';
 
   @override
   Widget build(BuildContext context) {

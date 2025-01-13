@@ -10,8 +10,6 @@ class ReportProvider extends ChangeNotifier {
   ReportStatus? _selectedStatus;
   bool _isLoading = false;
   String? _error;
-  DateTime? _startDate;
-  DateTime? _endDate;
 
   List<ReportModel> get reports => _filterReports();
   bool get isLoading => _isLoading;
@@ -109,24 +107,5 @@ class ReportProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
-  }
-
-  Future<List<ReportModel>> getFilteredReports() async {
-    try {
-      return await _reportService.getReportsOnce(
-        category: _selectedCategory,
-        status: _selectedStatus,
-        startDate: _startDate,
-        endDate: _endDate,
-      );
-    } catch (e) {
-      _setError(e.toString());
-      return [];
-    }
-  }
-
-  void _setError(String error) {
-    _error = error;
-    notifyListeners();
   }
 }
