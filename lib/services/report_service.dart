@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../models/comment_model.dart';
 import '../models/vote_model.dart';
 import 'dart:io';
+import '../models/report_votes.dart';
 
 class ReportService {
   final _supabase = Supabase.instance.client;
@@ -293,5 +294,68 @@ class ReportService {
                 notification['user_id'] == userId &&
                 notification['read'] == false)
             .length);
+  }
+
+  // Stream to get real-time vote counts for a specific report
+  Stream<ReportVotes> getReportVotes(String reportId) {
+    return _supabase
+        .from('report_votes')
+        .stream(primaryKey: ['report_id'])
+        .eq('report_id', reportId)
+        .map((data) {
+          // Ensure data is not empty
+          if (data.isEmpty) {
+            return ReportVotes(upvotes: 0, downvotes: 0);
+          }
+
+          // Aggregate votes
+          int upvotes =
+              data.where((vote) => vote['vote_type'] == 'upvote').length;
+          int downvotes =
+              data.where((vote) => vote['vote_type'] == 'downvote').length;
+
+          return ReportVotes(upvotes: upvotes, downvotes: downvotes);
+        });
+  }
+
+  // Stream to get real-time comment count for a specific report
+  Stream<int> getReportCommentCount(String reportId) {
+    return _supabase
+        .from('comments')
+        .stream(primaryKey: ['report_id'])
+        .eq('report_id', reportId)
+        .map((data) => data.length);
+  }
+
+  // Method to handle upvoting a report
+  Future<void> upvoteReport(String reportId) async {
+    final currentUser = _supabase.auth.currentUser;
+    if (currentUser == null) return;
+
+    try {
+      await _supabase.from('report_votes').upsert({
+        'report_id': reportId,
+        'user_id': currentUser.id,
+        'vote_type': 'upvote'
+      });
+    } catch (e) {
+      print('Error upvoting report: $e');
+    }
+  }
+
+  // Method to handle downvoting a report
+  Future<void> downvoteReport(String reportId) async {
+    final currentUser = _supabase.auth.currentUser;
+    if (currentUser == null) return;
+
+    try {
+      await _supabase.from('report_votes').upsert({
+        'report_id': reportId,
+        'user_id': currentUser.id,
+        'vote_type': 'downvote'
+      });
+    } catch (e) {
+      print('Error downvoting report: $e');
+    }
   }
 }
