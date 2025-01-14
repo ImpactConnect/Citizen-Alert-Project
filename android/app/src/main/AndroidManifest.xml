@@ -14,6 +14,9 @@
         android:label="Citizen Alert"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyCVS093QECgowNhmD_aVFn6ilm3WauW7MQ"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"

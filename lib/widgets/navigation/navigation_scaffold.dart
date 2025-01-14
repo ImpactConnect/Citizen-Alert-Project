@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/navigation_provider.dart';
 import '../../screens/home/home_screen.dart';
+import '../../screens/explore/explore_screen.dart';
 import '../../screens/sos/sos_screen.dart';
 import '../../screens/settings/settings_screen.dart';
 import '../../screens/faq/faq_screen.dart';
@@ -9,33 +10,40 @@ import '../../screens/more/more_screen.dart';
 import 'custom_navigation_bar.dart';
 
 class NavigationScaffold extends StatelessWidget {
-  const NavigationScaffold({super.key});
+  final int? initialIndex;
+  final Widget? child;
+
+  const NavigationScaffold({
+    super.key,
+    this.initialIndex,
+    this.child,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final currentIndex = context.watch<NavigationProvider>().currentIndex;
+    final navigationProvider = Provider.of<NavigationProvider>(context);
 
-    return WillPopScope(
-      onWillPop: () async {
-        if (currentIndex != 0) {
-          context.read<NavigationProvider>().setIndex(0);
-          return false;
-        }
-        return true;
-      },
-      child: Scaffold(
-        body: IndexedStack(
-          index: currentIndex,
-          children: const [
-            HomeScreen(),
-            SOSScreen(),
-            SettingsScreen(),
-            FAQScreen(),
-            MoreScreen(),
-          ],
-        ),
-        bottomNavigationBar: const CustomNavigationBar(),
-      ),
+    // Set initial index if provided
+    if (initialIndex != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        navigationProvider.setIndex(initialIndex!);
+      });
+    }
+
+    return Scaffold(
+      body: child ??
+          IndexedStack(
+            index: navigationProvider.currentIndex,
+            children: [
+              HomeScreen(),
+              ExploreScreen(),
+              const SOSScreen(),
+              const SettingsScreen(),
+              const FAQScreen(),
+              const MoreScreen(),
+            ],
+          ),
+      bottomNavigationBar: const CustomNavigationBar(),
     );
   }
 }

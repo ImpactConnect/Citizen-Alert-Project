@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../reports/submit_report_screen.dart';
-import '../../explore/explore_screen.dart';
-import '../../sos/sos_screen.dart';
-import '../../safety/safety_tips_screen.dart';
-import '../../analytics/analytics_screen.dart';
+import '../../../widgets/navigation/navigation_scaffold.dart';
+import '../../../screens/reports/submit_report_screen.dart';
+import '../../../screens/blog/blog_screen.dart';
+import '../../../screens/location/location_screen.dart';
+import '../../../screens/safety/safety_tips_screen.dart';
+import '../../../screens/analytics/analytics_screen.dart';
 
 class QuickActions extends StatelessWidget {
   const QuickActions({super.key});
@@ -19,42 +20,65 @@ class QuickActions extends StatelessWidget {
           _QuickActionButton(
             icon: Icons.add_circle_outline,
             label: 'New Report',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const SubmitReportScreen()),
-            ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const NavigationScaffold(
+                    initialIndex: 0,
+                    child: SubmitReportScreen(),
+                  ),
+                ),
+              );
+            },
           ),
           _QuickActionButton(
-            icon: Icons.explore,
-            label: 'Explore',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => ExploreScreen()),
-            ),
+            icon: Icons.article_outlined,
+            label: 'Blog',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const BlogScreen(),
+                ),
+              );
+            },
           ),
           _QuickActionButton(
-            icon: Icons.warning_amber,
-            label: 'SOS',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const SOSScreen()),
-            ),
+            icon: Icons.location_on,
+            label: 'Location',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const LocationScreen(),
+                ),
+              );
+            },
           ),
           _QuickActionButton(
             icon: Icons.tips_and_updates,
             label: 'Safety Tips',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const SafetyTipsScreen()),
-            ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const SafetyTipsScreen(),
+                ),
+              );
+            },
           ),
           _QuickActionButton(
             icon: Icons.analytics,
             label: 'Analytics',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => AnalyticsScreen()),
-            ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AnalyticsScreen(),
+                ),
+              );
+            },
           ),
         ],
       ),

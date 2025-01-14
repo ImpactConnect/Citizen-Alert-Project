@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/report_model.dart';
 import '../../services/report_service.dart';
-import '../../widgets/layout/base_layout.dart';
 
 class AnalyticsScreen extends StatelessWidget {
   final ReportService _reportService = ReportService();
@@ -10,9 +9,11 @@ class AnalyticsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BaseLayout(
-      title: 'Analytics',
-      child: StreamBuilder<List<ReportModel>>(
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Analytics'),
+      ),
+      body: StreamBuilder<List<ReportModel>>(
         stream: _reportService.getReports(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {

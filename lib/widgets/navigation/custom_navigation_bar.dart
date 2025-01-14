@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/navigation_provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../services/report_service.dart';
 
 class CustomNavigationBar extends StatelessWidget {
   const CustomNavigationBar({super.key});
@@ -11,113 +10,41 @@ class CustomNavigationBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final currentIndex = context.watch<NavigationProvider>().currentIndex;
     final user = context.watch<AuthProvider>().user;
+    final bool isGuest = !context.watch<AuthProvider>().isAuthenticated;
 
-    return NavigationBar(
-      selectedIndex: currentIndex,
-      onDestinationSelected: (index) {
+    return BottomNavigationBar(
+      currentIndex: currentIndex,
+      onTap: (index) {
         context.read<NavigationProvider>().setIndex(index);
       },
-      animationDuration: const Duration(milliseconds: 300),
-      destinations: [
-        const NavigationDestination(
+      type: BottomNavigationBarType.fixed,
+      selectedItemColor: Theme.of(context).colorScheme.primary,
+      unselectedItemColor: Colors.grey,
+      items: [
+        const BottomNavigationBarItem(
           icon: Icon(Icons.home_outlined),
-          selectedIcon: Icon(Icons.home),
+          activeIcon: Icon(Icons.home),
           label: 'Home',
-          tooltip: 'Go to Home',
         ),
-        NavigationDestination(
-          icon: Stack(
-            children: [
-              const Icon(Icons.warning_outlined),
-              if (user != null && !user.isGuest)
-                StreamBuilder<int>(
-                  stream: ReportService().getEmergencyReportsCount(),
-                  builder: (context, snapshot) {
-                    final count = snapshot.data ?? 0;
-                    if (count == 0) return const SizedBox();
-                    return Positioned(
-                      right: 0,
-                      top: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 16,
-                          minHeight: 16,
-                        ),
-                        child: Text(
-                          count.toString(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-            ],
-          ),
-          selectedIcon: const Icon(Icons.warning),
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.explore_outlined),
+          activeIcon: Icon(Icons.explore),
+          label: 'Explore',
+        ),
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.warning_amber_outlined),
+          activeIcon: Icon(Icons.warning_amber),
           label: 'SOS',
-          tooltip: 'Emergency Reports',
         ),
-        const NavigationDestination(
+        const BottomNavigationBarItem(
           icon: Icon(Icons.settings_outlined),
-          selectedIcon: Icon(Icons.settings),
+          activeIcon: Icon(Icons.settings),
           label: 'Settings',
-          tooltip: 'App Settings',
         ),
-        const NavigationDestination(
-          icon: Icon(Icons.help_outline),
-          selectedIcon: Icon(Icons.help),
-          label: 'FAQ',
-          tooltip: 'Frequently Asked Questions',
-        ),
-        NavigationDestination(
-          icon: Stack(
-            children: [
-              const Icon(Icons.more_horiz),
-              if (user != null && !user.isGuest)
-                StreamBuilder<int>(
-                  stream: ReportService().getUnreadNotificationsCount(user.uid),
-                  builder: (context, snapshot) {
-                    final count = snapshot.data ?? 0;
-                    if (count == 0) return const SizedBox();
-                    return Positioned(
-                      right: 0,
-                      top: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 16,
-                          minHeight: 16,
-                        ),
-                        child: Text(
-                          count.toString(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-            ],
-          ),
-          selectedIcon: const Icon(Icons.more_horiz),
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.more_horiz_outlined),
+          activeIcon: Icon(Icons.more_horiz),
           label: 'More',
-          tooltip: 'Additional Options',
         ),
       ],
     );

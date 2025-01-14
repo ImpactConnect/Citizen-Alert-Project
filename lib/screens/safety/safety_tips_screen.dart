@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import '../../widgets/layout/base_layout.dart';
 
 class SafetyTipsScreen extends StatelessWidget {
   const SafetyTipsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BaseLayout(
-      title: 'Safety Tips',
-      child: ListView(
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Safety Tips'),
+      ),
+      body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           _buildTipCard(

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../../models/news_model.dart';
-import '../../news/news_list_screen.dart';
 
 class NewsSection extends StatelessWidget {
   const NewsSection({super.key});
@@ -50,10 +49,7 @@ class NewsSection extends StatelessWidget {
               ),
               TextButton(
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const NewsListScreen()),
-                  );
+                  // TODO: Navigate to full news screen
                 },
                 child: const Text('View All'),
               ),

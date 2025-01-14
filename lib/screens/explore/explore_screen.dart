@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../models/report_model.dart';
 import '../../services/report_service.dart';
 import '../reports/report_detail_screen.dart';
-import '../../widgets/layout/base_layout.dart';
+import '../../providers/auth_provider.dart';
 
 class ExploreScreen extends StatelessWidget {
   final ReportService _reportService = ReportService();
@@ -11,9 +12,24 @@ class ExploreScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BaseLayout(
-      title: 'Explore Reports',
-      child: StreamBuilder<List<ReportModel>>(
+    final isGuest = context.watch<AuthProvider>().user?.isGuest ?? true;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Explore Reports'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.filter_list),
+            onPressed: () {
+              // TODO: Implement filter functionality
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Filters coming soon!')),
+              );
+            },
+          ),
+        ],
+      ),
+      body: StreamBuilder<List<ReportModel>>(
         stream: _reportService.getReports(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
@@ -64,6 +80,45 @@ class ExploreScreen extends StatelessWidget {
             },
           );
         },
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          if (isGuest) {
+            _showLoginPrompt(context);
+          } else {
+            Navigator.pushNamed(context, '/submit-report');
+          }
+        },
+        icon: const Icon(Icons.add),
+        label: const Text('New Report'),
+      ),
+    );
+  }
+
+  void _showLoginPrompt(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.info_outline, color: Colors.white),
+            const SizedBox(width: 8),
+            const Text('Please login to create a report'),
+            TextButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/login');
+              },
+              child: const Text(
+                'Login',
+                style:
+                    TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        backgroundColor: Colors.blue,
+        duration: const Duration(seconds: 4),
       ),
     );
   }
