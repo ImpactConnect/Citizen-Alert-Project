@@ -1,45 +1,25 @@
 import 'package:flutter/material.dart';
-import '../../../widgets/navigation/navigation_scaffold.dart';
-import '../../../screens/reports/submit_report_screen.dart';
-import '../../../screens/blog/blog_screen.dart';
-import '../../../screens/location/location_screen.dart';
-import '../../../screens/safety/safety_tips_screen.dart';
-import '../../../screens/analytics/analytics_screen.dart';
+import '../../location/location_screen.dart';
+import '../../safety/safety_tips_screen.dart';
+import '../../reports/submit_report_screen.dart';
 
 class QuickActions extends StatelessWidget {
-  const QuickActions({super.key});
+  const QuickActions({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 100,
-      child: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        scrollDirection: Axis.horizontal,
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
         children: [
           _QuickActionButton(
-            icon: Icons.add_circle_outline,
-            label: 'New Report',
+            icon: Icons.report,
+            label: 'Report',
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => const NavigationScaffold(
-                    initialIndex: 0,
-                    child: SubmitReportScreen(),
-                  ),
-                ),
-              );
-            },
-          ),
-          _QuickActionButton(
-            icon: Icons.article_outlined,
-            label: 'Blog',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const BlogScreen(),
+                  builder: (_) => const SubmitReportScreen(),
                 ),
               );
             },
@@ -68,18 +48,6 @@ class QuickActions extends StatelessWidget {
               );
             },
           ),
-          _QuickActionButton(
-            icon: Icons.analytics,
-            label: 'Analytics',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => AnalyticsScreen(),
-                ),
-              );
-            },
-          ),
         ],
       ),
     );
@@ -99,45 +67,26 @@ class _QuickActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      margin: const EdgeInsets.only(right: 16),
-      child: InkWell(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: GestureDetector(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          width: 80,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
+        child: Column(
+          children: [
+            CircleAvatar(
+              backgroundColor:
+                  Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              child: Icon(
                 icon,
-                color: theme.colorScheme.primary,
-                size: 32,
+                color: Theme.of(context).colorScheme.primary,
               ),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                style: theme.textTheme.bodySmall,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
         ),
       ),
     );

@@ -16,17 +16,13 @@ class HomeAppBar extends StatelessWidget {
       floating: true,
       pinned: true,
       expandedHeight: 60,
-      flexibleSpace: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Theme.of(context).colorScheme.primary,
-              Theme.of(context).colorScheme.secondary,
-            ],
-          ),
-        ),
+      backgroundColor: Colors.grey[900],
+      leading: IconButton(
+        icon: const Icon(Icons.menu),
+        onPressed: () {
+          // TODO: Implement drawer or side menu functionality
+          Scaffold.of(context).openDrawer();
+        },
       ),
       actions: [
         if (!isGuest)
@@ -38,11 +34,11 @@ class HomeAppBar extends StatelessWidget {
           ),
         PopupMenuButton<String>(
           icon: CircleAvatar(
-            backgroundColor: Theme.of(context).colorScheme.primary,
+            backgroundColor: Theme.of(context).colorScheme.onSurface,
             child: user?.avatarUrl != null
                 ? Image.network(user!.avatarUrl!, fit: BoxFit.cover)
                 : Icon(Icons.person,
-                    color: Theme.of(context).colorScheme.onPrimary),
+                    color: Theme.of(context).colorScheme.surface),
           ),
           itemBuilder: (context) => [
             if (!isGuest) ...[

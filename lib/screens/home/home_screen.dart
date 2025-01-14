@@ -40,7 +40,7 @@ class HomeScreen extends StatelessWidget {
         ),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.grey[900],
         duration: const Duration(seconds: 4),
       ),
     );
@@ -51,6 +51,31 @@ class HomeScreen extends StatelessWidget {
     final isGuest = context.watch<AuthProvider>().user?.isGuest ?? true;
 
     return Scaffold(
+      drawer: Drawer(
+        child: ListView(
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(
+                color: Colors.blue,
+              ),
+              child: Text('Menu'),
+            ),
+            ListTile(
+              title: const Text('Item 1'),
+              onTap: () {
+                // Handle item 1 tap
+              },
+            ),
+            ListTile(
+              title: const Text('Item 2'),
+              onTap: () {
+                // Handle item 2 tap
+              },
+            ),
+            // Add more menu items as needed
+          ],
+        ),
+      ),
       body: RefreshIndicator(
         onRefresh: () => _refreshData(context),
         child: CustomScrollView(
