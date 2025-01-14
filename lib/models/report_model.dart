@@ -1,30 +1,30 @@
+import 'package:flutter/foundation.dart';
+
+enum ReportStatus { pending, inProgress, resolved, rejected }
+
 enum ReportCategory {
   infrastructure,
   environment,
+  safety,
+  health,
+  transportation,
   utilities,
   emergency,
-  general,
-}
-
-enum ReportStatus {
-  pending,
-  inProgress,
-  resolved,
-  rejected,
+  general
 }
 
 class ReportModel {
   final String id;
-  final String userId;
   final String title;
   final String description;
-  final String location;
   final ReportCategory category;
   final ReportStatus status;
-  final String priority;
+  final DateTime createdAt;
+  final String userId;
+  final String location;
   final List<String> mediaUrls;
   final String? videoUrl;
-  final DateTime createdAt;
+  final String priority;
   final DateTime? updatedAt;
 
   ReportModel({
@@ -61,20 +61,25 @@ class ReportModel {
 
   factory ReportModel.fromMap(Map<String, dynamic> map) {
     return ReportModel(
-      id: map['id'],
-      userId: map['user_id'],
-      title: map['title'],
-      description: map['description'],
-      location: map['location'],
+      id: map['id'] ?? '',
+      userId: map['user_id'] ?? '',
+      title: map['title'] ?? '',
+      description: map['description'] ?? '',
+      location: map['location'] ?? '',
       category: ReportCategory.values.firstWhere(
         (e) => e.toString().split('.').last == map['category'],
+        orElse: () => ReportCategory.general,
       ),
       status: ReportStatus.values.firstWhere(
         (e) => e.toString().split('.').last == map['status'],
+        orElse: () => ReportStatus.pending,
       ),
-      priority: map['priority'],
+      priority: map['priority'] ?? 'medium',
       mediaUrls: List<String>.from(map['media_urls'] ?? []),
       videoUrl: map['video_url'],
+      createdAt: map['created_at'] != null
+          ? DateTime.parse(map['created_at'])
+          : DateTime.now(),
       updatedAt:
           map['updated_at'] != null ? DateTime.parse(map['updated_at']) : null,
     );

@@ -325,6 +325,22 @@ class __ReportCardState extends State<_ReportCard> {
     reportService.downvoteReport(widget.report.id);
   }
 
+  IconData _getCategoryIcon(ReportCategory category) {
+    final categoryName = category.toString().split('.').last.toLowerCase();
+
+    final categoryIcons = {
+      'infrastructure': Icons.construction,
+      'environment': Icons.eco,
+      'safety': Icons.security,
+      'health': Icons.medical_services,
+      'transportation': Icons.directions_bus,
+      'utilities': Icons.electrical_services,
+      'other': Icons.category,
+    };
+
+    return categoryIcons[categoryName] ?? Icons.category;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -366,15 +382,27 @@ class __ReportCardState extends State<_ReportCard> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   // Category Chip
-                  Chip(
-                    label: Text(
-                      widget.report.category.toString().split('.').last,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSecondary,
+                  Row(
+                    children: [
+                      Icon(
+                        _getCategoryIcon(widget.report.category),
+                        size: 18,
+                        color: theme.colorScheme.primary.withOpacity(0.7),
                       ),
-                    ),
-                    backgroundColor: theme.colorScheme.secondary,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                      const SizedBox(width: 8),
+                      Text(
+                        widget.report.category
+                            .toString()
+                            .split('.')
+                            .last
+                            .toUpperCase(),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1.1,
+                        ),
+                      ),
+                    ],
                   ),
 
                   // Status Chip

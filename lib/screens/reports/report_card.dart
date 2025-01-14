@@ -102,15 +102,22 @@ class ReportCard extends StatelessWidget {
   IconData _getCategoryIcon(ReportCategory category) {
     switch (category) {
       case ReportCategory.infrastructure:
-        return Icons.build;
+        return Icons.construction;
       case ReportCategory.environment:
         return Icons.eco;
+      case ReportCategory.safety:
+        return Icons.security;
+      case ReportCategory.health:
+        return Icons.medical_services;
+      case ReportCategory.transportation:
+        return Icons.directions_bus;
       case ReportCategory.utilities:
-        return Icons.power;
+        return Icons.electrical_services;
       case ReportCategory.emergency:
-        return Icons.emergency;
+        return Icons.warning;
       case ReportCategory.general:
-        return Icons.report_problem;
+      default:
+        return Icons.category;
     }
   }
 
