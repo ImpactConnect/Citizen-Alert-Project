@@ -63,114 +63,20 @@ class _ExploreScreenState extends State<ExploreScreen> {
     });
   }
 
-  void _showFilterBottomSheet() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Filter Reports',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Category Filter
-                  Text(
-                    'Category',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  Wrap(
-                    spacing: 8,
-                    children: ReportCategory.values.map((category) {
-                      return ChoiceChip(
-                        label: Text(category.toString().split('.').last),
-                        selected: _selectedCategory == category,
-                        onSelected: (bool selected) {
-                          setModalState(() {
-                            _selectedCategory = selected ? category : null;
-                          });
-                          setState(() {
-                            _selectedCategory = selected ? category : null;
-                            _filterReports();
-                          });
-                        },
-                      );
-                    }).toList(),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Status Filter
-                  Text(
-                    'Status',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  Wrap(
-                    spacing: 8,
-                    children: ReportStatus.values.map((status) {
-                      return ChoiceChip(
-                        label: Text(status.toString().split('.').last),
-                        selected: _selectedStatus == status,
-                        onSelected: (bool selected) {
-                          setModalState(() {
-                            _selectedStatus = selected ? status : null;
-                          });
-                          setState(() {
-                            _selectedStatus = selected ? status : null;
-                            _filterReports();
-                          });
-                        },
-                      );
-                    }).toList(),
-                  ),
-
-                  const SizedBox(height: 16),
-                  Center(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          _selectedCategory = null;
-                          _selectedStatus = null;
-                          _searchController.clear();
-                          _filteredReports = _allReports;
-                        });
-                        Navigator.pop(context);
-                      },
-                      child: const Text('Reset Filters'),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
         title: const Text('Community Reports'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: _showFilterBottomSheet,
-          ),
-        ],
       ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Search Bar
           Padding(
@@ -194,6 +100,104 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 ),
               ),
               onChanged: (_) => _filterReports(),
+            ),
+          ),
+
+          // Filters Label and Scrollview
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Row(
+              children: [
+                Text(
+                  'Filters',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const SizedBox(width: 8),
+                const Expanded(child: Divider()),
+              ],
+            ),
+          ),
+
+          // Horizontal Filter Scrollview
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              children: [
+                // Category Filter Dropdown
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: DropdownButton<ReportCategory>(
+                    hint: Text(
+                      'Category',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    value: _selectedCategory,
+                    underline: Container(),
+                    icon: const Icon(Icons.filter_list),
+                    items: ReportCategory.values.map((category) {
+                      return DropdownMenuItem(
+                        value: category,
+                        child: Text(category.toString().split('.').last),
+                      );
+                    }).toList(),
+                    onChanged: (category) {
+                      setState(() {
+                        _selectedCategory = category;
+                        _filterReports();
+                      });
+                    },
+                  ),
+                ),
+
+                // Status Filter Dropdown
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: DropdownButton<ReportStatus>(
+                    hint: Text(
+                      'Status',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    value: _selectedStatus,
+                    underline: Container(),
+                    icon: const Icon(Icons.filter_list),
+                    items: ReportStatus.values.map((status) {
+                      return DropdownMenuItem(
+                        value: status,
+                        child: Text(status.toString().split('.').last),
+                      );
+                    }).toList(),
+                    onChanged: (status) {
+                      setState(() {
+                        _selectedStatus = status;
+                        _filterReports();
+                      });
+                    },
+                  ),
+                ),
+
+                // Clear Filters Button
+                if (_selectedCategory != null || _selectedStatus != null)
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.clear),
+                    label: const Text('Clear Filters'),
+                    onPressed: () {
+                      setState(() {
+                        _selectedCategory = null;
+                        _selectedStatus = null;
+                        _searchController.clear();
+                        _filteredReports = _allReports;
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.secondary,
+                      foregroundColor:
+                          Theme.of(context).colorScheme.onSecondary,
+                    ),
+                  ),
+              ],
             ),
           ),
 
@@ -277,6 +281,7 @@ class __ReportCardState extends State<_ReportCard> {
   int _upvotes = 0;
   int _downvotes = 0;
   int _commentCount = 0;
+  bool _showFullDetails = false;
 
   @override
   void initState() {
@@ -389,6 +394,18 @@ class __ReportCardState extends State<_ReportCard> {
               ),
               const SizedBox(height: 8),
 
+              // Expandable Description
+              if (_showFullDetails)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    widget.report.description,
+                    style: theme.textTheme.bodyMedium,
+                    maxLines: 5,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+
               // Additional Metadata
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -464,6 +481,26 @@ class __ReportCardState extends State<_ReportCard> {
                         ],
                       ),
                     ],
+                  ),
+                ],
+              ),
+
+              // Show/Hide Details Button
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _showFullDetails = !_showFullDetails;
+                      });
+                    },
+                    child: Text(
+                      _showFullDetails ? 'Hide Details' : 'Show Details',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
                   ),
                 ],
               ),
